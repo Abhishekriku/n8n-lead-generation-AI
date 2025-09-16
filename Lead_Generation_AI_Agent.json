@@ -1,0 +1,316 @@
+{
+  "name": "Lead Generation AI Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "f449af29-ee70-4a98-aae6-976f15b2fa5d",
+      "name": "When chat message received",
+      "webhookId": "5f0858a1-dc86-4e0e-8593-2cef4fb05d70"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Prompt: {{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "=Enter your prompt here"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "a65f0a25-5378-4e00-8177-465ca864b9a2",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-5-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        64,
+        224
+      ],
+      "id": "cffea09b-d5c8-4707-a223-9bc487e68985",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "esYu7Jvzs9VrijRq",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        240,
+        208
+      ],
+      "id": "6957aadc-325a-4667-89f5-9d942256b788",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "toolDescription": "This bot helps you scrape all contact information for lead generation from Google Maps. \nUse the query parameter \"q\" for the search term, \"ll\" for latitude and longitude, and \"page\" for the current pagination index.",
+        "url": " https://google.serper.dev/maps",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', ``, 'string') }}"
+            },
+            {
+              "name": "ll",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters1_Value', ``, 'string') }}"
+            },
+            {
+              "name": "page",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters2_Value', ``, 'string') }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "00f47fe45202dc7969d4e0f8972cc16e0ab8025f"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        416,
+        208
+      ],
+      "id": "54d7f99c-9cde-4346-95af-db3bc89ee9f4",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the full response string from the previous step (usually \"AI Agent\" or similar)\n const output = items[0].json.output;\n // Try to extract the JSON array from the output string\n const jsonStart = output.indexOf('[');\n const jsonEnd = output.lastIndexOf(']') + 1;\n const jsonString = output.slice(jsonStart, jsonEnd);\n // Parse the JSON array\n const contacts = JSON.parse(jsonString);\n // Check that jsonStart and jsonEnd are valid\n if (jsonStart === -1 || jsonEnd === -1) {\n   throw new Error('Could not find a JSON array in the output string.');\n }\n // Optionally, return each contact as a separate item for downstream nodes (like Sheets)\n return contacts.map(contact => ({ json: contact }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ],
+      "id": "1bb568ad-0784-4059-a4e4-0cad5f2d5bc4",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "192rgekmw2048wwtDZmp39YLk0vhjhgvFZOHdtPldZDo",
+          "mode": "list",
+          "cachedResultName": "Lead Generator AI Agent Record",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/192rgekmw2048wwtDZmp39YLk0vhjhgvFZOHdtPldZDo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/192rgekmw2048wwtDZmp39YLk0vhjhgvFZOHdtPldZDo/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $json.Name }}",
+            "Address": "={{ $json.Address }}",
+            "Phone": "={{ $json.Phone }}",
+            "Website": "={{ $json.Website }}",
+            "Rating": "={{ $json.Rating }}",
+            "Opening Hours": "={{ $json['Opening Hours'] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Address",
+              "displayName": "Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Website",
+              "displayName": "Website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Rating",
+              "displayName": "Rating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Opening Hours",
+              "displayName": "Opening Hours",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        768,
+        0
+      ],
+      "id": "ef9c5ab3-b19b-40d4-bd87-710f7ce8a461",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hjXravbTvSqmbwPz",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "2cef50b8-9ae1-4a29-be95-373dcce40487",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "bef3ed5f0e279332fdab63d7455bdfab081a16b2a924c8a9df0bfd248977890b"
+  },
+  "id": "dNY1YMmURTlemflo",
+  "tags": []
+}
