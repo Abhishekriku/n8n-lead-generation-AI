@@ -51,7 +51,7 @@ Workflow Steps:
 ```
 
 ## Screenshots
-![flow](screenshots/flow-overview.png)
+![flow](screenshots/Lead-generation-AI-Agent.png)
 
 ## Notes on Credentials & Safety
 - This repo does **not** include secrets. Configure credentials inside n8n.
